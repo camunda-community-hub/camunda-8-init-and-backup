@@ -22,11 +22,11 @@ Scripts for Optimize are currently not available.
 
 # Usage
 
-The scripts in this project require [curl](https://curl.se/), [jq](https://jqlang.github.io/jq/) as well as several other command line tools such as `tail`, and `sed`. 
+The scripts in this project require [curl](https://curl.se/), [jq](https://jqlang.github.io/jq/) as well as several other command line tools such as `tail`, and `sed`.
 
 ## Initialize Elasticsearch Objects
 
-Edit the [config.sh](init/config.sh) and set appropriate values for your environment. Then run: 
+Change directories into the [init](init) directory. Then edit the [init/config.sh](init/config.sh) and set appropriate values for your environment. Then run `./init.sh` for available options and commands:
 
 ```shell
 $> ./init.sh
@@ -45,3 +45,23 @@ INFO:   tasklist      initialize ES objects for Tasklist
 INFO:   all           initialize ES objects for all Camunda Components
 ```
 
+## Delete Elasticsearch Objects
+
+Change directories into the [init](init) directory. Then edit the [init/config.sh](init/config.sh) and set appropriate values for your environment. Then run `./delete.sh` for available options and commands:
+
+```shell
+$> ./delete.sh
+INFO: Starting Camunda delete.sh script ...
+INFO: LOG_VERBOSITY is set to: INFO
+INFO: Usage for delete.sh:
+INFO:
+INFO: Options:
+INFO:   --help                    Display this help message
+INFO:   --v <LOG_VERBOSITY>       Controls the verbosity of logs written to stdout.
+INFO:                             Default is DEBUG. Set to one of DEBUG, INFO, WARN, ERROR
+INFO: Commands:
+INFO:   zeebe         delete ES objects for Zeebe
+INFO:   operate       delete ES objects for Operate
+INFO:   tasklist      delete ES objects for Tasklist
+INFO:   all           delete ES objects for all Camunda Components
+```
