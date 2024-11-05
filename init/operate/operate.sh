@@ -57,8 +57,15 @@ function createOperateIndexTemplates() {
       info "Attempting to create index template ${INDEX_TEMPLATE_NAME}"
       createIndexTemplateWithPatterns
 
-      # create index logic moved
-      #create_index "${index_template_fqn}" "${index_template_alias}"
+      INDEX_NUMBER_OF_SHARDS=${OPERATE_NUMBER_OF_SHARDS}
+      INDEX_NUMBER_OF_REPLICAS=${OPERATE_NUMBER_OF_REPLICAS}
+      INDEX_NAME=${index_template_fqn}
+      INDEX_ALIAS_NAME=${index_template_alias}
+      INDEX_ES_URL=${OPERATE_ES_URL}
+
+      info "Attempting to create index ${INDEX_NAME}"
+      createIndexNoMappings
+
     fi
   done
 

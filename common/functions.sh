@@ -91,6 +91,8 @@ function doCurl() {
   then debug "200 SUCCESS"
   elif [ "${STATUS}" == '400' ]
   then debug "400 Bad Request"
+  elif [ "${STATUS}" == '401' ]
+  then error "401 Unauthorized - make sure to update config.sh with the correct credentials and curl security options"
   error "400 Bad Request - enabled DEBUG for more details"
   else warn "Received ${STATUS} response - enable DEBUG for more details"
   fi
@@ -244,6 +246,53 @@ function createIndex() {
   CURL_DATA="${request_body}"
 
   doCurl
+}
+
+# Create index
+# Inputs:
+#   INDEX_NUMBER_OF_SHARDS
+#   INDEX_NUMBER_OF_REPLICAS
+#   INDEX_NAME
+#   INDEX_ALIAS_NAME
+#   INDEX_ES_URL
+function createIndexNoMappings() {
+
+  info "Attempting to create Index '${INDEX_NAME}'"
+
+  # Create the settings JSON dynamically
+  local settings=$(jq -n \
+    --argjson shards "$INDEX_NUMBER_OF_SHARDS" \
+    --argjson replicas "$INDEX_NUMBER_OF_REPLICAS" \
+    '{
+       "settings": {
+        "number_of_shards": $shards,
+        "number_of_replicas": $replicas
+       }
+    }')
+
+  debug "settings: ${settings}"
+
+  # Combine alias, settings, and mapping into the final JSON request body
+  local request_body=$(jq -n \
+    --argjson settings "$settings" \
+    --arg alias "$INDEX_ALIAS_NAME" \
+    '{
+      "aliases": {
+        ($alias): {}
+      },
+      "settings": $settings.settings
+    }')
+
+  debug "request_body: ${request_body}"
+
+  CURL_REQUEST="-X PUT"
+  CURL_URL="${INDEX_ES_URL}/${INDEX_NAME}"
+  CURL_HEADER="Content-Type: application/json"
+  CURL_OUTPUT="/dev/null"
+  CURL_DATA="${request_body}"
+
+  doCurl
+
 }
 
 function confirmPrompt() {
