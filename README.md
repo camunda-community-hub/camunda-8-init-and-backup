@@ -65,3 +65,9 @@ INFO:   operate       delete ES objects for Operate
 INFO:   tasklist      delete ES objects for Tasklist
 INFO:   all           delete ES objects for all Camunda Components
 ```
+
+# Docker Compose Environment
+
+The following branch can be used to setup a Camunda 8 environment with docker compose which is useful for testing these scripts: 
+
+https://github.com/upgradingdave/camunda-platform/tree/secure-elastic?tab=readme-ov-file#secure-elasticsearch
