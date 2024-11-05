@@ -57,8 +57,15 @@ function createTasklistIndexTemplates() {
       info "Attempting to create index template ${INDEX_TEMPLATE_NAME}"
       createIndexTemplateWithPatterns
 
-      #Originally thought we might need this, but
-      #create_index "${index_template_fqn}" "${index_template_alias}"
+      INDEX_NUMBER_OF_SHARDS=${TASKLIST_NUMBER_OF_SHARDS}
+      INDEX_NUMBER_OF_REPLICAS=${TASKLIST_NUMBER_OF_REPLICAS}
+      INDEX_NAME=${index_template_fqn}
+      INDEX_ALIAS_NAME=${index_template_alias}
+      INDEX_ES_URL=${TASKLIST_ES_URL}
+
+      info "Attempting to create index ${INDEX_NAME}"
+      createIndexNoMappings
+
     fi
   done
 
