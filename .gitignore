@@ -3,3 +3,12 @@ backup/es-indices.json
 backup/operate.txt
 backup/optimize.txt
 backup/tasklist.txt
+
+camunda/bin
+camunda/config
+camunda/lib
+camunda/APACHE-2.0.txt
+camunda/CAMUNDA-LICENSE-1.0.txt
+camunda/Clarification-on-gRPC-code-generation.txt
+camunda/NOTICE.txt
+camunda/README.txt
