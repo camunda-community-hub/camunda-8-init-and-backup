@@ -12,3 +12,5 @@ camunda/CAMUNDA-LICENSE-1.0.txt
 camunda/Clarification-on-gRPC-code-generation.txt
 camunda/NOTICE.txt
 camunda/README.txt
+camunda/.gitignore
+camunda/camunda-zeebe-8.6.8
