@@ -6,3 +6,4 @@ backup/tasklist.txt
 
 camunda/config/application.dave.yaml
 camunda/camunda-zeebe-8.6.8.tar.gz
+camunda/logs/zeebe.log

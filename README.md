@@ -6,12 +6,6 @@
 > Camunda extensions found in the Camunda Community Hub are maintained by the community and are not part of the commercial Camunda product. Camunda does not support community extensions as part of its commercial services to enterprise customers.
 
 
-Questions: 
-
-- Optimize?
-- Delete Schema?
-
-
 # Camunda 8 Init and Backup Scripts
 
 By default, the Camunda 8 applications will attempt to create Elasticsearch objects (such as [index templates](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-templates.html)) during first start. 
@@ -20,62 +14,71 @@ These operations require [Elasticsearch cluster level access](https://docs.camun
 
 However, in some cases, because of security policies, it is not possible to grant the Camunda applications the necessary [elastic search cluster level](https://docs.camunda.io/docs/self-managed/concepts/elasticsearch-privileges/) access to initialize Elasticsearch Objects.
 
-As a possible workaround to this problem, this project contains scripts that can be run independently of a Camunda 8 installation to initialize Elasticsearch Objects.
-
-TODO: is this still the case?
-Scripts for Optimize are currently not available.
+As a possible workaround to this problem, this project contains a standalone java program that can be run independently of a Camunda 8 installation to initialize Elasticsearch objects for Zeebe, Operate, and Task List.
 
 > [!WARNING]  
 > This is experimental code part of a proof of concept that Camunda presales is working on to explore options for creating elasticsearch schemas
 
-# Prerequisites
-
-TODO: 
-- Java (what version?) (hopefully jdk 21)
-- Elasticsearch with Security Enabled. [See here]() for a guide on how to setup Elasticsearch in Kubernetes
-- Able to connect to elasticsearch from wherever this client is run
-
 # Usage
 
-## Obtain a camunda release zip file
+## Java JDK 21
 
-TODO: explain how to do this
+Ensure you have a jdk 21 or higher installed. You can test by running the following command.  
+
+```shell
+java --version
+```
+
+For example, the output from the above command should look something like this:
+
+```shell
+java 21.0.4 2024-07-16 LTS
+Java(TM) SE Runtime Environment (build 21.0.4+8-LTS-274)
+Java HotSpot(TM) 64-Bit Server VM (build 21.0.4+8-LTS-274, mixed mode, sharing)
+```
+
+## Ensure you have connection to Elasticsearch
+
+The java program will attempt to connect to Elasticsearch via rest api. You can optionally verify connectivity to elasticsearch by running the following curl command
+
+```shell
+curl --location 'http://localhost:9200/_cluster/health' \
+--user YOUR_ES_USER:YOUR_ES_PASSWORD
+```
+
+## (Optionally) Obtain Latest Camunda Release
+
+As of early February 2025, there's a new Schema Generator class available on the main branch. We are hoping to release as part of an official release asap. 
+
+When the schema generator is available as part of official release, it will be published here. 
+
 https://github.com/camunda/camunda/releases
-https://github.com/camunda/camunda/issues/25922#issuecomment-2536985190
+
+In the meantime, a prebuilt version can be found inside the `camunda` directory of this project. 
+
+It's also possible to build from source by cloning the following branch: 
+
+https://github.com/camunda/camunda/tree/25922-standalone-schema-manager-8.6.8
+
+Then build the project located inside the `dist` directory. A successful build should produce several archives under `dist/target/`. For example, after extracting `src/dist/target/camunda-zeebe-8.6.8.tar.gz` you will see `bin`, `config`, and `lib` directories. Copy those directories into the `camunda` directory inside this project to use your custom-built version. 
 
 ## Update application.yaml config
 
-TODO: explain this
+Edit the `camunda/config/application.yaml` file found inside this project and update the Elasticearch connection and credential details. 
 
 ## Run schema migration tool
 
-TODO: Finish this
+Change directory into `camunda`. Execute the `./bin/schema` shell script for Linux or MacOS. Execute `./bin/schema.bat` script for Windows.
+
+This will produce a `camunda/logs` directory. Check the logs to make sure there are no `ERROR`. 
 
 Change directories into the [camunda](camuda) directory and run `./bin/schema`
 
-## Delete Elasticsearch Objects ??
+## Delete Elasticsearch Objects
 
-TODO: can we use this?
+There is a script file named `./init/delete.sh` that uses `curl` to send rest api requests to delete Elasticsearch objects related to Camunda. 
 
-Change directories into the [init](init) directory. Then edit the [init/config.sh](init/config.sh) and set appropriate values for your environment. Then run `./delete.sh` for available options and commands:
-
-```shell
-$> ./delete.sh
-INFO: Starting Camunda delete.sh script ...
-INFO: LOG_VERBOSITY is set to: INFO
-INFO: Usage for delete.sh:
-INFO:
-INFO: Options:
-INFO:   --help                    Display this help message
-INFO:   --v <LOG_VERBOSITY>       Controls the verbosity of logs written to stdout.
-INFO:                             Default is DEBUG. Set to one of DEBUG, INFO, WARN, ERROR
-INFO: Commands:
-INFO:   zeebe         delete ES objects for Zeebe
-INFO:   operate       delete ES objects for Operate
-INFO:   tasklist      delete ES objects for Tasklist
-INFO:   all           delete ES objects for all Camunda Components
-```
-# Create Camunda Roles and Users
+# Scripts for Camunda Roles and Users
 
 ## Create Elasticsearch role and user for Zeebe
 
@@ -84,7 +87,7 @@ Create Role
 ```shell
 curl --location 'http://localhost:9200/_security/role/zeebe-role' \
 --header 'Content-Type: application/json' \
---user elastic:camunda \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "description": "Grants access to zeebe indices",
     "cluster": [],
@@ -109,10 +112,10 @@ Create User
 ```shell
 curl --location 'http://localhost:9200/_security/user/zeebe' \
 --header 'Content-Type: application/json' \
---user elastic:camunda \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "password": "camunda",
-    "roles": "zeebe-role"
+    "roles": "zeebe-role, operate-role, tasklist-role"
 }'
 ```
 
@@ -123,7 +126,7 @@ Create Role
 ```shell
 curl --location 'http://localhost:9200/_security/role/operate-role' \
 --header 'Content-Type: application/json' \
---user elastic:camunda \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "description": "Grants access to operate indices",
     "cluster": [],
@@ -148,7 +151,7 @@ Create User
 ```shell
 curl --location 'http://localhost:9200/_security/user/operate' \
 --header 'Content-Type: application/json' \
---user elastic:camunda \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "password": "camunda",
     "roles": "operate-role,zeebe-role"
@@ -162,7 +165,7 @@ Create role
 ```shell
 curl --location 'http://localhost:9200/_security/role/tasklist-role' \
 --header 'Content-Type: application/json' \
---header 'Authorization: Basic ZWxhc3RpYzpjYW11bmRh' \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "description": "Grants access to tasklist indices",
     "cluster": [],
@@ -187,16 +190,19 @@ Create user
 ```shell
 curl --location 'http://localhost:9200/_security/user/tasklist' \
 --header 'Content-Type: application/json' \
---user elastic:camunda \
+--user ES_ADMIN_USERNAME:ES_ADMIN_PASSWORD \
 --data '{
     "password": "camunda",
     "roles": "tasklist-role,zeebe-role"
 }'
 ```
 
-# Elasticsearch in Kubernetes
+# Install Elasticsearch and Kibana in Kubernetes
 
-TODO: share Camunda K8s values.yaml file
+See [camunda-values-es-kibana.yaml](docs/camunda-values-es-kibana.yaml) for an example Camunda Values file that demonstrates: 
+- How to disable ES health checks for Tasklist and Operate
+- How to disable Schema Creation for Tasklist and Operate
+- How to deploy a small sized Elasticsearch and Kibana for testing
 
 ## Possible Issues
 
@@ -210,29 +216,24 @@ kibana [2025-02-10T15:21:28.109+00:00][ERROR][elasticsearch-service] This versio
 
 The fix is to explicitly set the kibana version inside your values.yaml file. The sample used in this guide solves this issue. 
 
-### http_ca.crt - No such file or directory
-
-TODO: verify this. 
-
-The files shared [here](https://github.com/camundakev/camunda-schema-generation-8.6) might have a http_ca.crt hard coded somewhere? If so, you might see this exception when running `./schema`
-
-```shell
-Caused by: java.io.FileNotFoundException: C:/Users/ruecker/Downloads/elasticsearch-8.14.0-windows-x86_64/elasticsearch-8.14.0/config/certs/http_ca.crt (No such file or directory)
-```
 
 ### Failed to execute goal com.diffplug.spotless-maven-plugin
 
-When attempting to build camunda from source, maven throws this exception: 
+When attempting to build camunda dist from source, maven throws this exception: 
 
 ```shell
 [ERROR] Failed to execute goal com.diffplug.spotless:spotless-maven-plugin:2.44.2:apply (spotless-format) on project zeebe-cluster-config: Unable to format file /Users/dave/code/camunda/zeebe/dynamic-config/src/main/java/io/camunda/zeebe/dynamic/config/serializer/ProtoBufSerializer.java: com.google.googlejavaformat.java.FormatterException: 433:15: error: illegal start of expression -> [Help 1]
 ```
 
+Java 23 is required to build the dist. 
+
 ### compilation error - illegal start of expression
 
-This seems to be something related to the version of java? I got this with jdk 21. Trying again with java version 23 ...
+When attempting to build camunda dist from source, maven throws this exception: 
 
 ```shell
 Compilation failure: Compilation failure: [ERROR] /Users/dave/code/camunda/zeebe/dynamic-config/src/main/java/io/camunda/zeebe/dynamic/config/serializer/ProtoBufSerializer.java:[507,39] illegal start of expression
 ```
+
+Java 23 is required to build the dist. 
 
