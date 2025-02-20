@@ -1,4 +1,4 @@
-This is a distribution of Camunda 8.6.8
+This is a distribution of Camunda 8.6.10-SNAPSHOT
 
 How to run
 ==========
