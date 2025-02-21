@@ -39,48 +39,60 @@ Java HotSpot(TM) 64-Bit Server VM (build 21.0.4+8-LTS-274, mixed mode, sharing)
 
 ## Ensure you have connection to Elasticsearch
 
-The java program will attempt to connect to Elasticsearch via rest api. You can optionally verify connectivity to elasticsearch by running the following curl command
+Verify connectivity to elasticsearch by running the following curl command. Remember to replace `$ELASTIC_UR`L, `$ELASTIC_USER`, and `$ELASTIC_PASSWORD` to match appropriately for your environment. 
 
 ```shell
-curl --location 'http://localhost:9200/_cluster/health' \
---user YOUR_ES_USER:YOUR_ES_PASSWORD
+curl --location '$ELASTIC_URL/_cluster/health' \
+--user $ELASTIC_USER:$ELASTIC_PASSWORD
 ```
 
-## (Optionally) Obtain Latest Camunda Release
+## Obtain latest version
 
-As of early February 2025, there's a new Schema Generator class available on the main branch. We are hoping to release as part of an official release asap. 
+As of early February 2025, there's a new Schema Generator class. This will be part of the 8.6.10 release. For now, you can find zip files in the releases page for this repo. 
 
-When the schema generator is available as part of official release, it will be published here. 
+As a convenience, the latest zip file has been extracted into the [camunda/8.6.8-update-3](camunda/8.6.8-update-3) directory of this project. 
 
-https://github.com/camunda/camunda/releases
+## Update application.properties file
 
-In the meantime, a prebuilt version can be found inside the `camunda` directory of this project. 
-
-It's also possible to build from source by cloning the following branch: 
-
-https://github.com/camunda/camunda/tree/25922-standalone-schema-manager-8.6.8
-
-Then build the project located inside the `dist` directory. A successful build should produce several archives under `dist/target/`. For example, after extracting `src/dist/target/camunda-zeebe-8.6.8.tar.gz` you will see `bin`, `config`, and `lib` directories. Copy those directories into the `camunda` directory inside this project to use your custom-built version. 
-
-## Update application.yaml config
-
-Edit the `camunda/config/application.yaml` file found inside this project and update the Elasticearch connection and credential details. 
+Edit the [camunda/8.6.8-update-3/config/application.properties](camunda/8.6.8-update-3/config/application.properties) file found inside this project. Update the Elasticearch related connection and credential details to match appropriately for your environment. 
 
 ## Run schema migration tool
 
-Change directory into `camunda`. Execute the `./bin/schema` shell script for Linux or MacOS. Execute `./bin/schema.bat` script for Windows.
+Change directory into [camunda/8.6.8-update-3](camunda/8.6.8-update-3). Execute `./bin/schema.bat` script for Windows, or the `./bin/schema` script for Linux or MacOS.
 
-This will produce a `camunda/logs` directory. Check the logs to make sure there are no `ERROR`. 
-
-Change directories into the [camunda](camuda) directory and run `./bin/schema`
-
-## Delete Elasticsearch Objects
-
-There is a script file named `./init/delete.sh` that uses `curl` to send rest api requests to delete Elasticsearch objects related to Camunda. 
+This will produce a `./logs` directory. Check the logs to make sure there are no `ERROR`.
 
 # Scripts for Camunda Roles and Users
 
-## Create Elasticsearch role and user for Zeebe
+The following are provided as guidance and convenience for how to create Elasticsearch users and roles. 
+
+## Create Elasticsearch role to run the schema generator
+
+This is an example of how to create a Elasticsearch role that grants cluster level access necessary to run the schema generator. 
+
+```shell
+curl --location 'http://localhost:9200/_security/role/zeebe-role' \
+--header 'Content-Type: application/json' \
+--user $ELASTIC_USER:$ELASTIC_PASSWORD \
+--data '{
+    "description": "Grants access to zeebe indices",
+    "cluster": [],
+    "indices": [
+        {
+            "names": [ "zeebe*" ],
+            "privileges": [
+                "monitor", 
+                "manage_ilm", 
+                "view_index_metadata", 
+                "manage_index", 
+                "manage_index_templates"
+            ]
+        }
+    ]
+}'
+```
+
+## Create Elasticsearch role for Zeebe
 
 Create Role
 
@@ -197,43 +209,4 @@ curl --location 'http://localhost:9200/_security/user/tasklist' \
 }'
 ```
 
-# Install Elasticsearch and Kibana in Kubernetes
-
-See [camunda-values-es-kibana.yaml](docs/camunda-values-es-kibana.yaml) for an example Camunda Values file that demonstrates: 
-- How to disable ES health checks for Tasklist and Operate
-- How to disable Schema Creation for Tasklist and Operate
-- How to deploy a small sized Elasticsearch and Kibana for testing
-
-## Possible Issues
-
-### Incompatible Kibana Version
-
-If you use Camunda Helm chart `11.2.0`, it will install Elasticsearch `8.15.4`. It seems that elasticsearch helm chart will install Kibana `8.17.0` by default and when this happens you might see this inside Kibana logs: 
-
-```shell
-kibana [2025-02-10T15:21:28.109+00:00][ERROR][elasticsearch-service] This version of Kibana (v8.17.0) is incompatible with the following Elasticsearch nodes in your cluster: v8.15.4
-```
-
-The fix is to explicitly set the kibana version inside your values.yaml file. The sample used in this guide solves this issue. 
-
-
-### Failed to execute goal com.diffplug.spotless-maven-plugin
-
-When attempting to build camunda dist from source, maven throws this exception: 
-
-```shell
-[ERROR] Failed to execute goal com.diffplug.spotless:spotless-maven-plugin:2.44.2:apply (spotless-format) on project zeebe-cluster-config: Unable to format file /Users/dave/code/camunda/zeebe/dynamic-config/src/main/java/io/camunda/zeebe/dynamic/config/serializer/ProtoBufSerializer.java: com.google.googlejavaformat.java.FormatterException: 433:15: error: illegal start of expression -> [Help 1]
-```
-
-Java 23 is required to build the dist. 
-
-### compilation error - illegal start of expression
-
-When attempting to build camunda dist from source, maven throws this exception: 
-
-```shell
-Compilation failure: Compilation failure: [ERROR] /Users/dave/code/camunda/zeebe/dynamic-config/src/main/java/io/camunda/zeebe/dynamic/config/serializer/ProtoBufSerializer.java:[507,39] illegal start of expression
-```
-
-Java 23 is required to build the dist. 
 
