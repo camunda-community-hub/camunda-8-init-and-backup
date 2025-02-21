@@ -48,17 +48,19 @@ curl --location '$ELASTIC_URL/_cluster/health' \
 
 ## Obtain latest version
 
-As of early February 2025, there's a new Schema Generator class. This will be part of the 8.6.10 release. For now, you can find zip files in the releases page for this repo. 
+As of early February 2025, there's a new Schema Generator class. This will be part of the 8.6.10 release. For now, you can find zip files in the [releases page of this repo here](https://github.com/camunda-community-hub/camunda-8-init-and-backup/releases). 
 
-As a convenience, the latest zip file has been extracted into the [camunda/8.6.8-update-3](camunda/8.6.8-update-3) directory of this project. 
+Download and extract a copy of the latest zip file. 
+
+Or, as a convenience, the latest zip file has been extracted into the [camunda/8.6.8-update-3](camunda/8.6.8-update-3) directory of this project. 
 
 ## Update application.properties file
 
-Edit the [camunda/8.6.8-update-3/config/application.properties](camunda/8.6.8-update-3/config/application.properties) file found inside this project. Update the Elasticearch related connection and credential details to match appropriately for your environment. 
+Edit the [8.6.8-update-3/config/application.properties](camunda/8.6.8-update-3/config/application.properties) file found inside this project. Update the Elasticearch related connection and credential details to match appropriately for your environment. 
 
 ## Run schema migration tool
 
-Change directory into [camunda/8.6.8-update-3](camunda/8.6.8-update-3). Execute `./bin/schema.bat` script for Windows, or the `./bin/schema` script for Linux or MacOS.
+Change directory into [8.6.8-update-3](camunda/8.6.8-update-3). Execute `./bin/schema.bat` script for Windows, or the `./bin/schema` script for Linux or MacOS.
 
 This will produce a `./logs` directory. Check the logs to make sure there are no `ERROR`.
 
