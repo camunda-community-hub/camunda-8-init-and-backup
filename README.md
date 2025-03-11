@@ -16,9 +16,6 @@ However, in some cases, because of security policies, it is not possible to gran
 
 As a possible workaround to this problem, this project contains a standalone java program that can be run independently of a Camunda 8 installation to initialize Elasticsearch objects for Zeebe, Operate, and Task List.
 
-> [!WARNING]  
-> This is experimental code part of a proof of concept that Camunda presales is working on to explore options for creating elasticsearch schemas
-
 # Usage
 
 ## Java JDK 21
@@ -56,11 +53,11 @@ Or, as a convenience, the latest zip file has been extracted into the [camunda/8
 
 ## Update application.properties file
 
-Edit the [8.6.8-update-3/config/application.properties](camunda/8.6.8-update-3/config/application.properties) file found inside this project. Update the Elasticearch related connection and credential details to match appropriately for your environment. 
+Edit the [8.6.11-update-1/config/application.properties](camunda/8.6.11-update-1/config/application.properties) file found inside this project. Update the Elasticearch related connection and credential details to match appropriately for your environment. 
 
 ## Run schema migration tool
 
-Change directory into [8.6.8-update-3](camunda/8.6.8-update-3). Execute `./bin/schema.bat` script for Windows, or the `./bin/schema` script for Linux or MacOS.
+Change directory into [8.6.11-update-1](camunda/8.6.11-update-1). Execute `./bin/schema.bat` script for Windows, or the `./bin/schema` script for Linux or MacOS.
 
 This will produce a `./logs` directory. Check the logs to make sure there are no `ERROR`.
 
