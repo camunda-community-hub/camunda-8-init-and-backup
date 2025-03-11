@@ -48,11 +48,11 @@ curl --location '$ELASTIC_URL/_cluster/health' \
 
 ## Obtain latest version
 
-As of early February 2025, there's a new Schema Generator class. This will be part of the 8.6.10 release. For now, you can find zip files in the [releases page of this repo here](https://github.com/camunda-community-hub/camunda-8-init-and-backup/releases). 
+As of early March 2025, there's a new Standalone Backup class. This will be part of the 8.6.12 release. For now, you can find zip files in the [releases page of this repo here](https://github.com/camunda-community-hub/camunda-8-init-and-backup/releases). 
 
 Download and extract a copy of the latest zip file. 
 
-Or, as a convenience, the latest zip file has been extracted into the [camunda/8.6.8-update-3](camunda/8.6.8-update-3) directory of this project. 
+Or, as a convenience, the latest zip file has been extracted into the [camunda/8.6.11-update-1](camunda/8.6.11-update-1) directory of this project. 
 
 ## Update application.properties file
 
@@ -210,5 +210,93 @@ curl --location 'http://localhost:9200/_security/user/tasklist' \
     "roles": "tasklist-role,zeebe-role"
 }'
 ```
+
+
+
+# Standalone Backup application usage
+
+## Prerequisites
+* The standalone backup application requires cluster-level privileges to work properly 
+  * This is only to make sure snapshots are created for the corresponding web app indices
+* Download and unpack the distribution we have provided in [camunda/8.6.11-update-1](camunda/8.6.11-update-1) - under `bin/` folder you will find a script called: `backup-webapps` (for Windows `backup-webapps.bat`).
+* When running the script, make sure you have Java v21+ installed on your machine
+## Limitations
+* This application was only tested with Elasticsearch 
+* This application doesn’t take backups itself; it orchestrates the snapshotting of indices in Elasticsearch 
+* This application only takes care of Operate and Tasklist indices; Optimize is not part of this procedure
+
+## Backup procedure 
+### Prepare Elasticsearch
+Before we can run the backup procedure, we need to setup/configure Elasticsearch.
+
+1. Set up a user with cluster-level privileges, which includes the creation of snapshots. [`snapshot_user`](https://www.elastic.co/guide/en/elasticsearch/reference/current/built-in-roles.html#:~:text=related%20to%20rollups.-,snapshot_user,-Grants%20the%20necessary) predefined role should be enough to run the standalone backup.
+2. Create a [snapshot repository](https://www.elastic.co/guide/en/elasticsearch/reference/current/snapshots-register-repository.html) in Elasticsearch
+
+### Create configuration
+Similar to the [standalone schema manager](https://docs.camunda.io/docs/self-managed/concepts/elasticsearch-without-cluster-privileges/#11-configure-schema-manager) application, we need a configuration file to set the connection, credentials and snpashot repository are in the application.
+
+1. Configure the Elasticsearch user having the cluster privilges, for both Operate and Tasklist properties.
+2. Configure the repository name, for both Operate and Tasklist properties.
+
+Store the following file and adjust it to your needs.
+
+`backup-manager.yml`:
+
+```yaml
+camunda:
+  operate:
+    backup:
+      repositoryName: "els-test"
+    elasticsearch:
+      # Example assuming an existing user called 'camunda-admin'
+      username: camunda-admin
+      password: camunda123
+      healthCheckEnabled: false
+  tasklist:
+    backup:
+      repositoryName: "els-test"
+    elasticsearch:
+      # Example assuming an existing user called 'camunda-admin'
+      username: camunda-admin
+      password: camunda123
+      healthCheckEnabled: false
+```
+
+
+### Trigger backup
+
+Similar to what we have documented [here](https://docs.camunda.io/docs/self-managed/operational-guides/backup-restore/backup-and-restore/#backup-process), we can do a backup while 1.-6. steps are replaced with the new standalone backup application.
+
+For that, run:
+
+```shell
+cd ./camunda/8.6.11-update-1
+SPRING_CONFIG_ADDITIONALLOCATION=backup-manager.yml ./bin/backup-webapps <backupID>
+```
+
+where <backupID> is the unique identifier of the backup, used as part of the snapshot names, etc. You can find more details about this in our [documentation](https://docs.camunda.io/docs/self-managed/operational-guides/backup-restore/backup-and-restore/#backup-process).
+
+The standalone application will wait until the snapshots/backup is complete, then exits with code 0 when it is succesful. It will log the state the backups every 5 seconds.
+Afterward, the user can continue with point 7 of our [backup procedure](https://docs.camunda.io/docs/self-managed/operational-guides/backup-restore/backup-and-restore/#backup-process). For completeness, they are documented next as well.
+
+
+7. Soft pause exporting in Zeebe. See Zeebe management API.
+8. Take a backup x of the exported Zeebe records in Elasticsearch using the Elasticsearch Snapshots API.
+```
+PUT /_snapshot/my_repository/camunda_zeebe_records_backup_x
+{
+  "indices": "zeebe-record*",
+  "feature_states": ["none"]
+}
+```
+9. Wait until the backup x of the exported Zeebe records is complete before proceeding. Take a backup x of Zeebe. See how to take a Zeebe backup.
+10. Wait until the backup x of Zeebe is completed before proceeding. See how to monitor a Zeebe backup. Resume exporting in Zeebe. See Zeebe management API.
+
+<strong>Important:</strong>
+If any of the steps above fail, you may need to restart with a new backup id. Ensure exporting is resumed if the backup process force quits in the middle of the process.
+
+### Restore:
+To restore a backup, please follow the steps documented in our [documentation](https://docs.camunda.io/docs/self-managed/operational-guides/backup-restore/backup-and-restore/#restore).
+
 
 
