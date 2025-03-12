@@ -248,6 +248,8 @@ camunda:
       # Example assuming an existing user called 'camunda-admin'
       username: camunda-admin
       password: camunda123
+      # Example assuming Elasticsearch is accessible at http://localhost:9200
+      url: http://localhost:9200
       healthCheckEnabled: false
   tasklist:
     backup:
@@ -256,6 +258,10 @@ camunda:
       # Example assuming an existing user called 'camunda-admin'
       username: camunda-admin
       password: camunda123
+      # Example assuming Elasticsearch is accessible at http://localhost:9200
+      url: http://localhost:9200
+
+      url: http://localhost:9200
       healthCheckEnabled: false
 ```
 
